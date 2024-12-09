@@ -94,6 +94,13 @@ from utils.torch_utils import (
     torch_distributed_zero_first,
 )
 
+from improvements import anchorboxyaml
+
+# we want to modify the contents of the models/yolov5s.yaml file 
+# so instead of printing the contents we will change it in the file
+
+# we will pass the dataset to the anchorbox method
+
 LOCAL_RANK = int(os.getenv("LOCAL_RANK", -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv("RANK", -1))
 WORLD_SIZE = int(os.getenv("WORLD_SIZE", 1))
@@ -303,6 +310,18 @@ def train(hyp, opt, device, callbacks):
     labels = np.concatenate(dataset.labels, 0)
     mlc = int(labels[:, 0].max())  # max label class
     assert mlc < nc, f"Label class {mlc} exceeds nc={nc} in {data}. Possible class labels are 0-{nc - 1}"
+
+    """
+    extra change for modifying the model/yolov5.yaml file ##corresponding models n/s/m/l/x
+    """
+    yaml_path = cfg or ckpt["model"].yaml #"/content/yolov5-model.yaml"
+    Anchoroptimizer = anchorboxyaml.YOLOAnchorOptimizer(train_path.split('/train')[0] + '/', yaml_path)
+    # Load dataset labels
+    Anchoroptimizer.load_labels(split='train')
+    # Generate optimized anchors
+    anchors_pixel, avg_iou = Anchoroptimizer.generate_anchors(input_size=640)
+    # Update anchors in the .yaml file
+    Anchoroptimizer.update_yaml(anchors_pixel)
 
     # Process 0
     if RANK in {-1, 0}:
@@ -632,6 +651,7 @@ def main(opt, callbacks=Callbacks()):
         For detailed usage, refer to:
         https://github.com/ultralytics/yolov5/tree/master/models
     """
+
     if RANK in {-1, 0}:
         print_args(vars(opt))
         check_git_status()
