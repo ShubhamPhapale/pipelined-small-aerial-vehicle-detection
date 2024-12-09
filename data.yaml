@@ -1,0 +1,6 @@
+train: /home/zaid/aditi_fyp/yolo/FYP_2024/Smallmerged/train/images
+val: /home/zaid/aditi_fyp/yolo/FYP_2024/Smallmerged/val/images
+test: /home/zaid/aditi_fyp/yolo/FYP_2024/Smallmerged/test/images
+
+nc: 4
+names: ['bird', 'helicopter', 'plane', 'drone']
